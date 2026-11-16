@@ -6,7 +6,18 @@
     "strict": false,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node"],
+    // OMP serves @earendil-works/* imports from its legacy-pi shim modules
+    // (pi-ai/compat folds into pi-ai), and redirects `typebox` to its own
+    // legacy-typebox. Point tsc at the same shims, from the pi-coding-agent
+    // version the host runs.
+    "paths": {
+      "@earendil-works/pi-ai": ["./node_modules/@oh-my-pi/pi-coding-agent/dist/types/extensibility/legacy-pi-ai-shim.d.ts"],
+      "@earendil-works/pi-ai/compat": ["./node_modules/@oh-my-pi/pi-coding-agent/dist/types/extensibility/legacy-pi-ai-shim.d.ts"],
+      "@earendil-works/pi-coding-agent": ["./node_modules/@oh-my-pi/pi-coding-agent/dist/types/extensibility/legacy-pi-coding-agent-shim.d.ts"],
+      "@earendil-works/pi-tui": ["./node_modules/@oh-my-pi/pi-coding-agent/dist/types/extensibility/legacy-pi-tui-shim.d.ts"],
+      "typebox": ["./node_modules/@oh-my-pi/pi-coding-agent/dist/types/extensibility/legacy-typebox.d.ts"]
+    }
   },
   "include": ["src/**/*.ts"]
 }
