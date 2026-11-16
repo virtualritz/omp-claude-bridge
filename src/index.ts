@@ -14,6 +14,7 @@ import { PROVIDER_ID, isPromptRole, messageContentToText, convertPiMessages } fr
 import { buildVariantModels, buildModels, claudeCodeEffort, claudeCodeModelId, type ContextWindowMode, type LongContextSettings, resolveModel as _resolveModel } from "./models.js";
 import { MCP_SERVER_NAME, MCP_TOOL_PREFIX, extractSkillsBlock } from "./skills.js";
 import { verifyWrittenSession as _verifyWrittenSession } from "./session-verify.js";
+import { retainSessionAfterError } from "./session-retention.js";
 import { extractAllToolResults as _extractAllToolResults, type McpResult } from "./extract-tool-results.js";
 import { QueryContext, ctx } from "./query-state.js";
 import { loadConfig, type Config } from "./config.js";
@@ -1440,11 +1441,12 @@ function streamClaudeAgentSdk(model: Model<any>, context: Context, options?: Sim
 		})
 		.catch((error) => {
 			debug(`provider: query error, model=${cliModel}, aborted=${Boolean(options?.signal?.aborted)}, error=`, error);
-			if (wasAborted || options?.signal?.aborted) {
-				markSharedRebuild(sessionKey, true);
-			} else {
-				setSharedSession(sessionKey, null);
+			const current = getSharedSession(sessionKey);
+			const retained = retainSessionAfterError(current, wasAborted || Boolean(options?.signal?.aborted), cwd, process.env.CLAUDE_CONFIG_DIR);
+			if (retained && retained === current) {
+				debug(`provider: query error — keeping session ${current.sessionId.slice(0, 8)} (transcript intact)`);
 			}
+			setSharedSession(sessionKey, retained);
 			queryCtx.deferredUserMessages = [];
 			if (queryCtx.turnOutput) {
 				queryCtx.turnOutput.stopReason = options?.signal?.aborted ? "aborted" : "error";
